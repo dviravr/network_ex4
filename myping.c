@@ -120,9 +120,10 @@ unsigned short calculate_checksum(unsigned short * paddress, int len);
 //  still be sent, but do not expect to see ICMP_ECHO_REPLY in most such cases
 //  since anti-spoofing is wide-spread.
 
-#define SOURCE_IP "127.0.0.1"
+#define SOURCE_IP "10.0.2.15"
 // i.e the gateway or ping to google.com for their ip-address
-#define DESTINATION_IP "216.58.212.174"
+// #define DESTINATION_IP "216.58.212.174"
+#define DESTINATION_IP "10.0.2.4"
 
 int main ()
 {
@@ -133,79 +134,82 @@ int main ()
 
     int datalen = strlen(data) + 1;
 
-    //==================
-    // IP header
-    //==================
 
-    // IP protocol version (4 bits)
-    iphdr.ip_v = 4;
+    // deleted code ################# 2
 
-    // IP header length (4 bits): Number of 32-bit words in header = 5
-    iphdr.ip_hl = IP4_HDRLEN / 4; // not the most correct
+//     //==================
+//     // IP header
+//     //==================
 
-    // Type of service (8 bits) - not using, zero it.
-    iphdr.ip_tos = 0;
+//     // IP protocol version (4 bits)
+//     iphdr.ip_v = 4;
 
-    // Total length of datagram (16 bits): IP header + ICMP header + ICMP data
-    iphdr.ip_len = htons (IP4_HDRLEN + ICMP_HDRLEN + datalen);
+//     // IP header length (4 bits): Number of 32-bit words in header = 5
+//     iphdr.ip_hl = IP4_HDRLEN / 4; // not the most correct
 
-    // ID sequence number (16 bits): not in use since we do not allow fragmentation
-    iphdr.ip_id = 0;
+//     // Type of service (8 bits) - not using, zero it.
+//     iphdr.ip_tos = 0;
 
-    // Fragmentation bits - we are sending short packets below MTU-size and without 
-    // fragmentation
-    int ip_flags[4];
+//     // Total length of datagram (16 bits): IP header + ICMP header + ICMP data
+//     iphdr.ip_len = htons (IP4_HDRLEN + ICMP_HDRLEN + datalen);
 
-    // Reserved bit
-    ip_flags[0] = 0;
+//     // ID sequence number (16 bits): not in use since we do not allow fragmentation
+//     iphdr.ip_id = 0;
 
-    // "Do not fragment" bit
-    ip_flags[1] = 0;
+//     // Fragmentation bits - we are sending short packets below MTU-size and without 
+//     // fragmentation
+//     int ip_flags[4];
 
-    // "More fragments" bit
-    ip_flags[2] = 0;
+//     // Reserved bit
+//     ip_flags[0] = 0;
 
-    // Fragmentation offset (13 bits)
-    ip_flags[3] = 0;
+//     // "Do not fragment" bit
+//     ip_flags[1] = 0;
 
-    iphdr.ip_off = htons ((ip_flags[0] << 15) + (ip_flags[1] << 14)
-                      + (ip_flags[2] << 13) +  ip_flags[3]);
+//     // "More fragments" bit
+//     ip_flags[2] = 0;
 
-    // TTL (8 bits): 128 - you can play with it: set to some reasonable number
-    iphdr.ip_ttl = 128;
+//     // Fragmentation offset (13 bits)
+//     ip_flags[3] = 0;
 
-    // Upper protocol (8 bits): ICMP is protocol number 1
-    iphdr.ip_p = IPPROTO_ICMP;
+//     iphdr.ip_off = htons ((ip_flags[0] << 15) + (ip_flags[1] << 14)
+//                       + (ip_flags[2] << 13) +  ip_flags[3]);
 
-    // Source IP
-    if (inet_pton (AF_INET, SOURCE_IP, &(iphdr.ip_src)) <= 0) 
-    {
-        fprintf (stderr, "inet_pton() failed for source-ip with error: %d"
-#if defined _WIN32
-			, WSAGetLastError()
-#else
-			, errno
-#endif
-			);
-        return -1;
-    }
+//     // TTL (8 bits): 128 - you can play with it: set to some reasonable number
+//     iphdr.ip_ttl = 128;
 
-    // Destination IPv
-    if (inet_pton (AF_INET, DESTINATION_IP, &(iphdr.ip_dst)) <= 0)
-    {
-        fprintf (stderr, "inet_pton() failed for destination-ip with error: %d" 
-#if defined _WIN32
-			, WSAGetLastError()
-#else
-			, errno
-#endif
-			);
-        return -1;
-    }
+//     // Upper protocol (8 bits): ICMP is protocol number 1
+//     iphdr.ip_p = IPPROTO_ICMP;
+
+//     // Source IP
+//     if (inet_pton (AF_INET, SOURCE_IP, &(iphdr.ip_src)) <= 0) 
+//     {
+//         fprintf (stderr, "inet_pton() failed for source-ip with error: %d"
+// #if defined _WIN32
+// 			, WSAGetLastError()
+// #else
+// 			, errno
+// #endif
+// 			);
+//         return -1;
+//     }
+
+//     // Destination IPv
+//     if (inet_pton (AF_INET, DESTINATION_IP, &(iphdr.ip_dst)) <= 0)
+//     {
+//         fprintf (stderr, "inet_pton() failed for destination-ip with error: %d" 
+// #if defined _WIN32
+// 			, WSAGetLastError()
+// #else
+// 			, errno
+// #endif
+// 			);
+//         return -1;
+//     }
 
     // IPv4 header checksum (16 bits): set to 0 prior to calculating in order not to include itself.
-    iphdr.ip_sum = 0;
-    iphdr.ip_sum = calculate_checksum((unsigned short *) &iphdr, IP4_HDRLEN);
+    // iphdr.ip_sum = 0;
+    // iphdr.ip_sum = calculate_checksum((unsigned short *) &iphdr, IP4_HDRLEN);
 
 
     //===================
@@ -229,12 +233,15 @@ int main ()
 
     // ICMP header checksum (16 bits): set to 0 not to include into checksum calculation
     icmphdr.icmp_cksum = 0;
+    
+
+    // added code ############################ 3 ???
+    // icmphdr.icmp_cksum = calculate_checksum((unsigned short *) &icmphdr, ICMP_HDRLEN);
 
     // Combine the packet 
     char packet[IP_MAXPACKET];
 
 
-    // deleted code ################# 2
 
     // // First, IP header.
     // memcpy (packet, &iphdr, IP4_HDRLEN);
@@ -249,17 +256,23 @@ int main ()
     icmphdr.icmp_cksum = calculate_checksum((unsigned short *) (packet + IP4_HDRLEN), ICMP_HDRLEN + datalen);
     memcpy ((packet + IP4_HDRLEN), &icmphdr, ICMP_HDRLEN);
 
-    struct sockaddr_in dest_in;
+    struct sockaddr_in dest_in, src;
     memset (&dest_in, 0, sizeof (struct sockaddr_in));
     dest_in.sin_family = AF_INET;
+    memset (&src, 0, sizeof (struct sockaddr_in));
+    src.sin_family = AF_INET;
 
     // The port is irrelant for Networking and therefore was zeroed.
 #if defined _WIN32
     dest_in.sin_addr.s_addr = iphdr.ip_dst;
 #else
-    dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
+    // dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
+    dest_in.sin_addr.s_addr = inet_addr(DESTINATION_IP);
+    src.sin_addr.s_addr = inet_addr(SOURCE_IP);
+
+    // src.sin_addr.s_addr = iphdr.ip_src.s_addr;
 #endif
-    
+
 
 #if defined _WIN32
 	WSADATA wsaData = { 0 };
@@ -313,6 +326,9 @@ int main ()
 // 			);
 //         return -1;
 //     }
+    struct timeval startTime;
+    struct timeval endTime;
+    gettimeofday(&startTime, NULL);
 
     // Send the packet using sendto() for sending datagrams.
     if (sendto (sock, packet, IP4_HDRLEN + ICMP_HDRLEN + datalen, 0, (struct sockaddr *) &dest_in, sizeof (dest_in)) == -1)  
@@ -326,6 +342,34 @@ int main ()
 			);
         return -1;
     }
+    unsigned int fromSize = sizeof(src);
+
+    // while (1)
+    // {
+        if (recvfrom (sock, packet, IP_MAXPACKET, 0, (struct sockaddr *) &dest_in, &fromSize) == -1)  
+        {
+            fprintf (stderr, "recvfrom() failed with error: %d"
+    #if defined _WIN32
+                , WSAGetLastError()
+    #else
+                , errno
+    #endif
+                );
+            return -1;
+        } 
+        else
+        {
+            puts("else");
+            // break;
+        }
+        
+    // }
+    gettimeofday(&endTime, NULL);
+    printf("%ld\n", endTime.tv_sec - startTime.tv_sec);
+    printf("%ld\n", endTime.tv_usec - startTime.tv_usec);
+
+    
+   
 
   // Close the raw socket descriptor.
 #if defined _WIN32
