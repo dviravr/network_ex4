@@ -1,4 +1,4 @@
-#include <pcap.h>
+#include "pcap.h"
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
@@ -25,6 +25,8 @@ struct ipheader {
   unsigned short int iph_chksum; //IP datagram checksum
   struct  in_addr    iph_sourceip; //Source IP address 
   struct  in_addr    iph_destip;   //Destination IP address 
+  unsigned char icmp_type;
+ 	unsigned char icmp_code;
 };
 
 /* ICMP Header*/
@@ -49,18 +51,35 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
 
    
     /* determine protocol */
-    if(ip->iph_protocol==IPPROTO_ICMP) {                               
-        struct icmphdr *icmp_hdr = (struct icmphdr *)(packet + sizeof(ip->iph_len));
-        
-        {
+   // if(ip->iph_protocol==IPPROTO_ICMP) {                               
+       // struct icmphdr *icmp_hdr = (struct icmphdr *)(packet + sizeof(ip->iph_len));
+        switch(ip->iph_protocol) {                               
+        case IPPROTO_TCP:
+            printf("   Protocol: TCP\n");
+            return;
+        case IPPROTO_UDP:
+            printf("   Protocol: UDP\n");
+            return;
+        case IPPROTO_ICMP:
+
+            printf("From: %s\n", inet_ntoa(ip->iph_sourceip));  
+            printf("To: %s\n", inet_ntoa(ip->iph_destip));
+            printf("Type: %d\n",(unsigned char)ip->icmp_type );
+            printf("Code: %d\n////end of packet////////\n",(unsigned char)ip->icmp_code);
+            return;
+        default:
+            printf("   Protocol: others\n");
+            return;
+    }
+      /*  {
             printf("From: %s\n", inet_ntoa(ip->iph_sourceip));  
             printf("To: %s\n", inet_ntoa(ip->iph_destip));
             printf("Type: %d\n",(unsigned char)icmp_hdr->icmp_type );
             printf("Code: %d\n////end of packet////////\n",(unsigned char)icmp_hdr->icmp_code);
 
-        };
+        };*/
         
-    }
+    //}
   }
 }
  
