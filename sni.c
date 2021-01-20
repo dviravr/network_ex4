@@ -37,20 +37,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
                            (packet + sizeof(struct ethheader)); 
 
         /* determine protocol */
-    switch(ip->iph_protocol) {                                 
-        case IPPROTO_TCP:
-            return;
-        case IPPROTO_UDP:
-            return;
-        case IPPROTO_ICMP:
-            printf("   Protocol: ICMP\n");
-             printf("From: %s\n", inet_ntoa(ip->iph_sourceip));  
-            printf("To: %s\n", inet_ntoa(ip->iph_destip));
-            printf("Type: %d\n",(unsigned char)ip->icmp_type );
-            printf("Code: %d\n////end of packet////////\n",(unsigned char)ip->icmp_code);
-            return;
-        default:
-            return;
+    if (ip->iph_protocol == IPPROTO_ICMP)
+    {
+        printf("   Protocol: ICMP\n");
+        printf("From: %s\n", inet_ntoa(ip->iph_sourceip));  
+        printf("To: %s\n", inet_ntoa(ip->iph_destip));
+        printf("Type: %d\n",(unsigned char)ip->icmp_type );
+        printf("Code: %d\n////end of packet////////\n",(unsigned char)ip->icmp_code);
     }
   }
 }

@@ -116,6 +116,8 @@ int main() {
     if (sendto(sock, packet, ICMP_HDRLEN + datalen, 0, (struct sockaddr *)&dest_in, sizeof(dest_in)) == -1) {
         fprintf(stderr, "sendto() failed with error: %d", errno);
         return -1;
+    } else {
+        puts("sent message");
     }
     if (recvfrom(sock, recv_packet, sizeof(recv_packet), 0, (struct sockaddr *)&src, &fromSize) == -1) {
         fprintf(stderr, "recvfrom() failed with error: %d", errno);
@@ -124,8 +126,8 @@ int main() {
         puts("got message");
     }
     gettimeofday(&endTime, NULL);
-    printf("%ld\n", endTime.tv_sec - startTime.tv_sec);
-    printf("%ld\n", endTime.tv_usec - startTime.tv_usec);
+    printf("RTT in seconds: %ld\n", endTime.tv_sec - startTime.tv_sec);
+    printf("RTT in miliseconds: %ld\n", endTime.tv_usec - startTime.tv_usec);
 
     // Close the raw socket descriptor.
     close(sock);
